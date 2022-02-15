@@ -7,7 +7,7 @@
 	<name>LogonBox Authenticator API</name>
 	<description>An API for using LogonBox Authenticator credentials in your own Java applications</description>
 	<url>https://www.logonbox.com</url>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 	<inceptionYear>2022</inceptionYear>
 	
 	
