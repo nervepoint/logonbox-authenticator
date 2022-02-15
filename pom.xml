@@ -1,0 +1,185 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.nervepoint</groupId>
+	<artifactId>logonbox-authenticator-java</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	
+	<name>LogonBox Authenticator API</name>
+	<description>An API for using LogonBox Authenticator credentials in your own Java applications</description>
+	<url>https://www.logonbox.com</url>
+	<packaging>pom</packaging>
+	<inceptionYear>2022</inceptionYear>
+	
+	
+	<properties>
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+	</properties>
+
+	<licenses>
+		<license>
+			<name>Apache License Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<organization>
+		<name>LogonBox Limited</name>
+		<url>https://www.logonbox.com</url>
+	</organization>
+
+	<scm>
+		<url>https://github.com/nervepoint/logonbox-authenticator-java.git</url>
+		<connection>scm:git:https://github.com/nervepoint/logonbox-authenticator-java.git</connection>
+	</scm>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>sonatype-nexus-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<developers>
+		<developer>
+			<id>lee</id>
+			<name>Lee David Painter</name>
+			<email>lee@logonbox.com</email>
+			<organization>LogonBox Limited</organization>
+			<url>https://www.logonbox.com</url>
+		</developer>
+		<developer>
+			<id>brett</id>
+			<name>Brett Smith</name>
+			<email>brett@logonbox.com</email>
+			<organization>LogonBox Limited</organization>
+			<url>https://www.logonbox.com</url>
+		</developer>
+	</developers>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.13.1</version>
+		</dependency>
+	</dependencies>
+	
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<version>1.6.7</version>
+						<extensions>true</extensions>
+						<configuration>
+							<serverId>sonatype-nexus-staging</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.10.3</version>
+					<executions>
+						<execution>
+							<id>release</id>
+							<phase>package</phase>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>2.2.1</version>
+					<executions>
+						<execution>
+							<id>attach-sources</id>
+							<goals>
+								<goal>jar-no-fork</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>11</source>
+						<target>11</target>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.19</version>
+					<configuration>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>license-maven-plugin</artifactId>
+					<version>1.6</version>
+
+					<configuration>
+						<licenseName>apache_v2</licenseName>
+					</configuration>
+
+					<executions>
+						<execution>
+							<id>first</id>
+							<goals>
+								<goal>update-file-header</goal>
+							</goals>
+							<phase>process-sources</phase>
+							<configuration>
+								<canUpdateCopyright>true</canUpdateCopyright>
+								<canUpdateDescription>true</canUpdateDescription>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>
