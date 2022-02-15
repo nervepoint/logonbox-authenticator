@@ -25,6 +25,7 @@ public class SignatureResponse {
 	boolean success;
 	String message;
 	String signature;
+	String response;
 	
 	public boolean isSuccess() {
 		return success;
@@ -44,6 +45,10 @@ public class SignatureResponse {
 	public void setSignature(String signature) {
 		this.signature = signature;
 	}
-	
-	
+	public String getResponse() {
+		return response;
+	}
+	public void setResponse(String response) {
+		this.response = response;
+	}
 }
