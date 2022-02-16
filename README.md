@@ -71,3 +71,22 @@ Only allowing access to your application when a true value has been returned. **
 boolean success = resp.verify();
 ```
 
+## Dependencies
+
+There is only one required dependency on Jackson Databind. We would have preferred not to use this, there are of course other JSON parsers around but Jackson generally has the most coverage, for example being included with Spring Boot. The usage is miminal and therefore is likely you can change the version of Jackson used easily to match your own use.
+
+For Java runtimes below version 15 we recommend using [str4d/ed25519](https://github.com/str4d/ed25519-java) project to support ed25519 keys which are our preferred key algorithm (the app will fallback to using a strong RSA key automatically if your runtime does not support ed25519). You will need the following maven dependency.
+
+```xml
+<dependency>
+  <groupId>net.i2p.crypto</groupId>
+  <artifactId>eddsa</artifactId>
+  <version>0.3.0</version>
+</dependency>
+```
+
+And you should install their JCE provider before using this API.
+
+```java
+Security.addProvider(new EdDSASecurityProvider());
+```
