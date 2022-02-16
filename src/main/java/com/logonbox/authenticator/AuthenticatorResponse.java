@@ -50,9 +50,11 @@ public class AuthenticatorResponse {
 			return verifyRSASignature();
 		case "Ed25519":
 			return verifyEd25519Signature();
+		case "EdDSA":
+			return verifyEdDSASignature();
+		default:
+			throw new IOException("Unsupport algorithm " + key.getAlgorithm());
 		}
-		
-		return verified;
 	}
 
 	private boolean verifyRSASignature() throws IOException {
@@ -88,6 +90,25 @@ public class AuthenticatorResponse {
 			return sgr.verify(signature);
 		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
 			throw new IOException(e.getMessage(), e);
+		}
+	}
+	
+	private boolean verifyEdDSASignature() throws IOException {
+		
+		try {
+			Signature sgr = Signature.getInstance("EdDSA");
+			sgr.initVerify(key);
+			sgr.update(payload);
+			return sgr.verify(signature);
+		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException ex) {
+			try {
+				Signature sgr = Signature.getInstance("NoneWithEdDSA");
+				sgr.initVerify(key);
+				sgr.update(payload);
+				return sgr.verify(signature);
+			} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+				throw new IOException(e.getMessage(), e);
+			}
 		}
 	}
 
