@@ -90,3 +90,17 @@ And you should install their JCE provider before using this API.
 ```java
 Security.addProvider(new EdDSASecurityProvider());
 ```
+
+## Debugging
+
+A simple Logger interface is used that will output to `System.out` and `System.err` by default. You can enable this after you have created the client object.
+
+```java
+client.enableDebug();
+```
+
+This should be sufficient for testing. To integrate logging into your wider application just provide an instance of `com.logonbox.authenticator.Logger` to the `enableDebug` method.
+
+```java
+client.enableDebug(new MyApplicationLogger());
+```
