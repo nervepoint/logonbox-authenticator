@@ -43,8 +43,6 @@ public class AuthenticatorResponse {
 	
 	public boolean verify() throws IOException {
 		
-		boolean verified = false;
-		
 		switch(key.getAlgorithm()) {
 		case "RSA":
 			return verifyRSASignature();
