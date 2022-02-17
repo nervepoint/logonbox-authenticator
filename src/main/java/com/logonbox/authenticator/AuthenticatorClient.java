@@ -237,17 +237,10 @@ public class AuthenticatorClient {
 		String encodedPayload = Base64.getUrlEncoder().encodeToString(payload);
 		int flags = 0;
 		if (key instanceof RSAPublicKey) {
-
-			while (flags >= 0) {
-				try {
-					return new AuthenticatorResponse(key, payload,
-							requestSignature(principal, fingerprint, text, 
-									buttonText, encodedPayload, flags), flags);
-				} catch (IOException e) {
-					flags -= 2;
-				}
-			}
-			;
+			/**
+			 * Tell the server we want a RSAWithSHA512 signature
+			 */
+			flags = 4;
 		}
 
 		return new AuthenticatorResponse(key, payload,
@@ -294,6 +287,16 @@ public class AuthenticatorClient {
 			
 			if(!result.isSuccess()) {
 				throw new IOException(result.getMessage());
+			}
+			
+			if("".equals(result.getSignature())) {
+				try(ByteArrayReader reader = new ByteArrayReader(Base64.getUrlDecoder().decode(result.getResponse()))) {
+					boolean success = reader.readBoolean();
+					if(!success) {
+						throw new IOException(reader.readString());
+					}
+				}
+				throw new IOException("The server did not respond with a valid response!");
 			}
 
 			return Base64.getUrlDecoder().decode(result.getSignature());
