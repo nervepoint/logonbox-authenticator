@@ -2,9 +2,9 @@
 
 Use this API to integrate LogonBox Authenticator into your own Java application authentication flows.  
 
-The LogonBox Authenticator uses an authentication mechanism similar to SSH private key authentication where users keys are published in an authorized keys listing on the crednetial server. This API will read the trusted public keys and then submit an authentication request payload to the credential server for signing by the corresponding private key. 
+The LogonBox Authenticator uses an authentication mechanism similar to SSH private key authentication where users keys are published in an authorized keys listing on the credential server. This API will read the trusted public keys and then submit an authentication request payload to the credential server for signing by the corresponding private key. 
 
-As part of the signing operation, the user must authorize the request within the LogonBox Authenticator app. Once authorized the payload is signed by the private key, which is held exclusivley within the secure storage of the app. 
+As part of the signing operation, the user must authorize the request within the LogonBox Authenticator app. Once authorized the payload is signed by the private key, which is held exclusively within the secure storage of the app. 
 
 To authenticate the user, the API verifies the signature returned to obtain the authentication result. 
 
@@ -14,7 +14,7 @@ There are many ways the authenticator can be used and this will depend on your a
 
 ### Server Redirect
 
-If you are logging a user into a web application, you can create a request, and redirect the user to a URL on the credential server where they are prompted to authorize the request on their device. This elimates the need for you to create your own user interface and provides a modern, clean authentication flow. 
+If you are logging a user into a web application, you can create a request, and redirect the user to a URL on the credential server where they are prompted to authorize the request on their device. This eliminates the need for you to create your own user interface and provides a modern, clean authentication flow. 
 
 When authentication completes, the server redirects back to your web application with an authentication response which you pass into the API for verification. 
 
@@ -56,7 +56,7 @@ if(resp.verify()) {
 
 ### Direct Signing
 
-If you are using a different protocol and cannot redirect the user via a web browser, or want to provide your own user interface, you can perform authentication exclusivley through the API. 
+If you are using a different protocol and cannot redirect the user via a web browser, or want to provide your own user interface, you can perform authentication exclusively through the API. 
 
 ```java
 /** Create a client and configure it with the LogonBox server **/
@@ -73,9 +73,9 @@ boolean success = resp.verify();
 
 ## Dependencies
 
-There is only one required dependency on Jackson Databind. We would have preferred not to use this, there are of course other JSON parsers around but Jackson generally has the most coverage, for example being included with Spring Boot. The usage is miminal and therefore is likely you can change the version of Jackson used easily to match your own use.
+There is only one required dependency on Jackson Databind. We would have preferred not to use this, there are of course other JSON parsers around but Jackson generally has the most coverage, for example being included with Spring Boot. The usage is minimal and therefore is likely you can change the version of Jackson used easily to match your own use.
 
-For Java runtimes below version 15 we recommend using [str4d/ed25519](https://github.com/str4d/ed25519-java) project to support ed25519 keys which are our preferred key algorithm (the app will fallback to using a strong RSA key automatically if your runtime does not support ed25519). You will need the following maven dependency.
+For Java runtimes below version 15 we recommend using [str4d/ed25519](https://github.com/str4d/ed25519-java) project to support ed25519 keys which are our preferred key algorithm (the app will fallback to using a strong RSA key automatically if your runtime does not support ed25519). You will need the following Maven dependency.
 
 ```xml
 <dependency>
