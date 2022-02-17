@@ -22,32 +22,39 @@ package com.logonbox.authenticator;
 
 public class SignatureResponse {
 
-	boolean success;
-	String message;
-	String signature;
-	String response;
-	
+	private boolean success;
+	private String message;
+	private String signature;
+	private String response;
+
 	public boolean isSuccess() {
 		return success;
 	}
+
 	public void setSuccess(boolean success) {
 		this.success = success;
 	}
+
 	public String getMessage() {
 		return message;
 	}
+
 	public void setMessage(String message) {
 		this.message = message;
 	}
+
 	public String getSignature() {
 		return signature;
 	}
+
 	public void setSignature(String signature) {
 		this.signature = signature;
 	}
+
 	public String getResponse() {
 		return response;
 	}
+
 	public void setResponse(String response) {
 		this.response = response;
 	}

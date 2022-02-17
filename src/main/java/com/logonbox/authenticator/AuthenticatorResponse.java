@@ -58,7 +58,7 @@ public class AuthenticatorResponse {
 	private boolean verifyRSASignature() throws IOException {
 		
 		try {
-			Signature sgr = Signature.getInstance(getRSASignatureAlgorithm(flags));
+			var sgr = Signature.getInstance(getRSASignatureAlgorithm(flags));
 			sgr.initVerify(key);
 			sgr.update(payload);
 			return sgr.verify(signature);
@@ -82,7 +82,7 @@ public class AuthenticatorResponse {
 	private boolean verifyEd25519Signature() throws IOException {
 		
 		try {
-			Signature sgr = Signature.getInstance("Ed25519");
+			var sgr = Signature.getInstance("Ed25519");
 			sgr.initVerify(key);
 			sgr.update(payload);
 			return sgr.verify(signature);
@@ -94,13 +94,13 @@ public class AuthenticatorResponse {
 	private boolean verifyEdDSASignature() throws IOException {
 		
 		try {
-			Signature sgr = Signature.getInstance("EdDSA");
+			var sgr = Signature.getInstance("EdDSA");
 			sgr.initVerify(key);
 			sgr.update(payload);
 			return sgr.verify(signature);
 		} catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException ex) {
 			try {
-				Signature sgr = Signature.getInstance("NoneWithEdDSA");
+				var sgr = Signature.getInstance("NoneWithEdDSA");
 				sgr.initVerify(key);
 				sgr.update(payload);
 				return sgr.verify(signature);

@@ -10,10 +10,10 @@ public class SignatureResponseTest {
 	@Test
 	void create() {
 		var r = new SignatureResponse();
-		assertEquals(false, r.success);
-		assertNull(r.message);
-		assertNull(r.response);
-		assertNull(r.signature);
+		assertEquals(false, r.isSuccess());
+		assertNull(r.getMessage());
+		assertNull(r.getResponse());
+		assertNull(r.getSignature());
 	}
 
 	@Test

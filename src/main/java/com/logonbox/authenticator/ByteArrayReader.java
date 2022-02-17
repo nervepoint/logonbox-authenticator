@@ -52,7 +52,7 @@ class ByteArrayReader extends ByteArrayInputStream {
 	public String readString() throws IOException {
 		int len = (int) readInt();
 		checkLength(len);
-		byte[] tmp = new byte[len];
+		var tmp = new byte[len];
 		read(tmp);
 		return new String(tmp, "UTF-8");
 	}
@@ -60,7 +60,7 @@ class ByteArrayReader extends ByteArrayInputStream {
 	public BigInteger readBigInteger() throws IOException {
 		int len = (int) readInt();
 		checkLength(len);
-		byte[] tmp = new byte[len];
+		var tmp = new byte[len];
 		read(tmp);
 		return new BigInteger(tmp);
 	}
@@ -68,7 +68,7 @@ class ByteArrayReader extends ByteArrayInputStream {
 	public byte[] readBinaryString() throws IOException {
 		int len = (int) readInt();
 		checkLength(len);
-		byte[] tmp = new byte[len];
+		var tmp = new byte[len];
 		read(tmp);
 		return tmp;
 

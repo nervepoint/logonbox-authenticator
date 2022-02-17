@@ -27,14 +27,14 @@ import java.math.BigInteger;
 public class ByteArrayWriter extends ByteArrayOutputStream {
 
 	public void writeBigInteger(BigInteger bi) throws IOException {
-		byte[] raw = bi.toByteArray();
+		var raw = bi.toByteArray();
 
 		writeInt(raw.length);
 		write(raw);
 	}
 
 	public void writeInt(long i) throws IOException {
-		byte[] raw = new byte[4];
+		var raw = new byte[4];
 
 		raw[0] = (byte) (i >> 24);
 		raw[1] = (byte) (i >> 16);
@@ -54,7 +54,7 @@ public class ByteArrayWriter extends ByteArrayOutputStream {
 	      writeInt(0);
 	    }
 	    else {
-	      byte[] tmp = str.getBytes();
+	      var tmp = str.getBytes();
 
 	      writeInt(tmp.length);
 	      write(tmp);

@@ -21,23 +21,15 @@ package com.logonbox.authenticator;
  */
 
 import java.io.IOException;
-import java.security.PublicKey;
 import java.util.Base64;
 
 public class AuthenticatorRequest {
 
-	AuthenticatorClient client;
-	PublicKey key;
-	String username;
-	String fingerprint;
-	String encodedPayload;
+	private final AuthenticatorClient client;
+	private final String encodedPayload;
 	
-	AuthenticatorRequest(AuthenticatorClient client, PublicKey key, String username, String fingerprint, int flags,
-			String encodedPayload) {
+	AuthenticatorRequest(AuthenticatorClient client, String encodedPayload) {
 		this.client = client;
-		this.key = key;
-		this.username = username;
-		this.fingerprint = fingerprint;
 		this.encodedPayload = encodedPayload;
 	}
 	
@@ -56,8 +48,8 @@ public class AuthenticatorRequest {
 
 	public AuthenticatorResponse processResponse(String response) throws IOException {
 		
-		byte[] payload = Base64.getUrlDecoder().decode(encodedPayload);
-		byte[] signature = Base64.getUrlDecoder().decode(response);
+		var payload = Base64.getUrlDecoder().decode(encodedPayload);
+		var signature = Base64.getUrlDecoder().decode(response);
 		
 		return client.processResponse(payload, signature);
 		

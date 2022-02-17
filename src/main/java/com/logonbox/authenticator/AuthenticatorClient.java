@@ -23,13 +23,11 @@ package com.logonbox.authenticator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -38,7 +36,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -107,8 +104,8 @@ public class AuthenticatorClient {
 	}
 
 	public AuthenticatorResponse authenticate(String principal) throws IOException {
-		byte[] tmp = new byte[128];
-		SecureRandom rnd = new SecureRandom();
+		var tmp = new byte[128];
+		var rnd = new SecureRandom();
 		rnd.nextBytes(tmp);
 
 		return authenticate(principal, tmp);
@@ -117,12 +114,12 @@ public class AuthenticatorClient {
 	public Collection<PublicKey> getUserKeys(String principal) throws IOException {
 
 		try {
-			HttpRequest request = HttpRequest.newBuilder()
+			var request = HttpRequest.newBuilder()
 					.uri(new URI(String.format("https://%s:%d/authorizedKeys/%s", hostname, port, principal))).GET()
 					.build();
 
-			HttpClient client = HttpClient.newHttpClient();
-			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+			var client = HttpClient.newHttpClient();
+			var response = client.send(request, BodyHandlers.ofString());
 
 			if(debug) {
 				log.info(String.format("Received authorized keys from %s", hostname));
@@ -130,9 +127,9 @@ public class AuthenticatorClient {
 			}
 			
 			List<PublicKey> keys = new ArrayList<>();
-			try (BufferedReader reader = new BufferedReader(new StringReader(response.body()))) {
+			try (var reader = new BufferedReader(new StringReader(response.body()))) {
 
-				String key = reader.readLine();
+				var key = reader.readLine();
 				if(!key.startsWith("# Authorized")) {
 					throw new IOException(String.format("Unable to list users authorized keys from %s", hostname));
 				}
@@ -147,7 +144,7 @@ public class AuthenticatorClient {
 							log.info(String.format("Parsing key %s", key));
 						}
 						
-						PublicKey pub = decodeKey(key);
+						var pub = decodeKey(key);
 						keys.add(pub);
 						
 						if(debug) {
@@ -170,19 +167,19 @@ public class AuthenticatorClient {
 	public AuthenticatorResponse authenticate(String principal, byte[] payload) throws IOException {
 
 		try {
-			HttpRequest request = HttpRequest.newBuilder()
+			var request = HttpRequest.newBuilder()
 					.uri(new URI(String.format("https://%s:%d/authorizedKeys/%s", hostname, port, principal))).GET()
 					.build();
 
-			HttpClient client = HttpClient.newHttpClient();
-			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+			var client = HttpClient.newHttpClient();
+			var response = client.send(request, BodyHandlers.ofString());
 
 			if(debug) {
 				log.info(String.format("Received authorized keys from %s", hostname));
 				log.info(response.body());
 			}
 			
-			try (BufferedReader reader = new BufferedReader(new StringReader(response.body()))) {
+			try (var reader = new BufferedReader(new StringReader(response.body()))) {
 
 				String key = reader.readLine();
 				
@@ -199,7 +196,7 @@ public class AuthenticatorClient {
 							log.info(String.format("Parsing key %s", key));
 						}
 						
-						PublicKey pub = decodeKey(key);
+						var pub = decodeKey(key);
 						
 						if(debug) {
 							log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
@@ -228,13 +225,13 @@ public class AuthenticatorClient {
 	private AuthenticatorResponse signPayload(String principal, PublicKey key, String text, String buttonText,
 			byte[] payload) throws IOException {
 
-		String fingerprint = generateFingerprint(key);
+		var fingerprint = generateFingerprint(key);
 		
 		if(debug) {
 			log.info(String.format("Key fingerprint is %s", fingerprint));
 		}
 		
-		String encodedPayload = Base64.getUrlEncoder().encodeToString(payload);
+		var encodedPayload = Base64.getUrlEncoder().encodeToString(payload);
 		int flags = 0;
 		if (key instanceof RSAPublicKey) {
 			/**
@@ -254,7 +251,7 @@ public class AuthenticatorClient {
 
 		try {
 			
-			StringBuilder builder = new StringBuilder();
+			var builder = new StringBuilder();
 			builder.append("username=");
 			builder.append(URLEncoder.encode(principal, StandardCharsets.UTF_8));
 			builder.append("&fingerprint=");
@@ -270,28 +267,28 @@ public class AuthenticatorClient {
 			builder.append("&payload=");
 			builder.append(encodedPayload);
 
-			HttpRequest request = HttpRequest.newBuilder()
+			var request = HttpRequest.newBuilder()
 					.uri(new URI(String.format("https://%s:%d/app/api/authenticator/signPayload", hostname, port)))
 					.header("Content-Type", "application/x-www-form-urlencoded")
 					.POST(HttpRequest.BodyPublishers.ofString(builder.toString())).build();
 
-			HttpClient client = HttpClient.newHttpClient();
+			var client = HttpClient.newHttpClient();
 			
-			HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+			var response = client.send(request, BodyHandlers.ofString());
 
 			if(debug) {
 				log.info(String.format("Received %s response", response.statusCode()));
 				log.info(response.body());
 			}
-			SignatureResponse result = new ObjectMapper().readValue(response.body(), SignatureResponse.class);
+			var result = new ObjectMapper().readValue(response.body(), SignatureResponse.class);
 			
 			if(!result.isSuccess()) {
 				throw new IOException(result.getMessage());
 			}
 			
 			if("".equals(result.getSignature())) {
-				try(ByteArrayReader reader = new ByteArrayReader(Base64.getUrlDecoder().decode(result.getResponse()))) {
-					boolean success = reader.readBoolean();
+				try(var reader = new ByteArrayReader(Base64.getUrlDecoder().decode(result.getResponse()))) {
+					var success = reader.readBoolean();
 					if(!success) {
 						throw new IOException(reader.readString());
 					}
@@ -308,13 +305,13 @@ public class AuthenticatorClient {
 	public String generateFingerprint(PublicKey key) throws IOException {
 
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			var md = MessageDigest.getInstance("SHA-256");
 
 			md.update(encodeKey(key));
 
-			byte[] digest = md.digest();
+			var digest = md.digest();
 
-			StringBuffer buf = new StringBuffer();
+			var buf = new StringBuffer();
 			buf.append("SHA256");
 			buf.append(":");
 
@@ -343,19 +340,19 @@ public class AuthenticatorClient {
 
 	private byte[] encodeKey(PublicKey key) throws IOException {
 
-		try (ByteArrayWriter writer = new ByteArrayWriter()) {
+		try (var writer = new ByteArrayWriter()) {
 			writer.writeString(getAlgorithm(key));
 
 			switch (key.getAlgorithm()) {
 			case "RSA":
-				RSAPublicKey rsa = (RSAPublicKey) key;
+				var rsa = (RSAPublicKey) key;
 				writer.writeBigInteger(rsa.getPublicExponent());
 				writer.writeBigInteger(rsa.getModulus());
 				break;
 			case "Ed25519":
 			case "EdDSA":
-				byte[] encoded = key.getEncoded();
-				byte[] seed = Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
+				var encoded = key.getEncoded();
+				var seed = Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
 				writer.writeBinaryString(seed);
 			}
 
@@ -367,16 +364,16 @@ public class AuthenticatorClient {
 
 		int idx = key.indexOf(' ');
 		@SuppressWarnings("unused")
-		String algorithm = key.substring(0, idx);
+		var algorithm = key.substring(0, idx);
 		int idx2 = key.indexOf(' ', idx + 1);
-		String base64 = key.substring(idx + 1, idx2);
+		var base64 = key.substring(idx + 1, idx2);
 		@SuppressWarnings("unused")
-		String comments = key.substring(idx2 + 1);
+		var comments = key.substring(idx2 + 1);
 
-		byte[] data = Base64.getDecoder().decode(base64);
+		var data = Base64.getDecoder().decode(base64);
 
-		ByteArrayReader reader = new ByteArrayReader(data);
-		String algorithm2 = reader.readString();
+		var reader = new ByteArrayReader(data);
+		var algorithm2 = reader.readString();
 
 		switch (algorithm2) {
 		case "ssh-rsa":
@@ -398,30 +395,30 @@ public class AuthenticatorClient {
 			keyFactory = KeyFactory.getInstance("EdDSA");
 		}
 		
-		byte[] pk = reader.readBinaryString();
+		var pk = reader.readBinaryString();
 		
-		byte[] encoded = new byte[ED25519_ASN_HEADER.length + pk.length];
+		var encoded = new byte[ED25519_ASN_HEADER.length + pk.length];
 		System.arraycopy(ED25519_ASN_HEADER, 0, encoded, 0, ED25519_ASN_HEADER.length);
 		System.arraycopy(pk, 0, encoded, ED25519_ASN_HEADER.length, pk.length);
-		EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(encoded);
+		var x509KeySpec = new X509EncodedKeySpec(encoded);
 		return keyFactory.generatePublic(x509KeySpec);
 
 	}
 
 	private PublicKey decodeRSA(ByteArrayReader reader) 
 			throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-		BigInteger e = reader.readBigInteger();
-		BigInteger n = reader.readBigInteger();
-		RSAPublicKeySpec rsaKey = new RSAPublicKeySpec(n, e);
+		var e = reader.readBigInteger();
+		var n = reader.readBigInteger();
+		var rsaKey = new RSAPublicKeySpec(n, e);
 
-		KeyFactory kf = KeyFactory.getInstance("RSA");
+		var kf = KeyFactory.getInstance("RSA");
 		return kf.generatePublic(rsaKey);
 
 	}
 
 	public PublicKey getUserKey(String username, String fingerprint) throws IOException {
-		for(PublicKey key : getUserKeys(username)) {
-			String thisFingerprint = generateFingerprint(key);
+		for(var key : getUserKeys(username)) {
+			var thisFingerprint = generateFingerprint(key);
 			if(thisFingerprint.equals(fingerprint)) {
 				return key;
 			}
@@ -431,9 +428,9 @@ public class AuthenticatorClient {
 	
 	public PublicKey getDefaultKey(String email) throws IOException {
 		
-		Collection<PublicKey> keys = getUserKeys(email);
+		var keys = getUserKeys(email);
 		PublicKey selected = null;
-		for(PublicKey key : keys) {
+		for(var key : keys) {
 			if(!key.getAlgorithm().equals("RSA")) {
 				selected = key;
 				break;
@@ -459,14 +456,14 @@ public class AuthenticatorClient {
 
 	public AuthenticatorResponse processResponse(byte[] payload, byte[] sig) throws IOException {
 		
-		try(ByteArrayReader reader = new ByteArrayReader(sig)) {
+		try(var reader = new ByteArrayReader(sig)) {
 			
-			boolean success = reader.readBoolean();
+			var success = reader.readBoolean();
 			if(success) {
-				String username = reader.readString();
-				String fingerprint = reader.readString();
+				var username = reader.readString();
+				var fingerprint = reader.readString();
 				int flags = (int) reader.readInt();
-				byte[] signature = reader.readBinaryString();
+				var signature = reader.readBinaryString();
 				
 				return new AuthenticatorResponse(getUserKey(username, fingerprint), payload, signature, flags);
 			} else {
@@ -478,11 +475,11 @@ public class AuthenticatorClient {
 
 	public AuthenticatorRequest generateRequest(String email, String redirectURL) throws IOException {
 		
-		try(ByteArrayWriter request = new ByteArrayWriter()) {
+		try(var request = new ByteArrayWriter()) {
 			
-			PublicKey key = getDefaultKey(email);
-			String fingerprint = generateFingerprint(key);
-			int flags = getFlags(key);
+			var key = getDefaultKey(email);
+			var fingerprint = generateFingerprint(key);
+			var flags = getFlags(key);
 			
 			request.writeString(email);
 			request.writeString(fingerprint);
@@ -493,9 +490,9 @@ public class AuthenticatorClient {
 			request.writeInt(System.currentTimeMillis());
 			request.writeString(redirectURL);
 		
-			String encoded = Base64.getUrlEncoder().encodeToString(request.toByteArray());
+			var encoded = Base64.getUrlEncoder().encodeToString(request.toByteArray());
 
-			return new AuthenticatorRequest(this, key, redirectURL, fingerprint, flags, encoded);
+			return new AuthenticatorRequest(this, encoded);
 		} 
 	}
 
