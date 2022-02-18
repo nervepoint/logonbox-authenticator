@@ -306,15 +306,11 @@ public class AuthenticatorClient {
 
 		try {
 			var md = MessageDigest.getInstance("SHA-256");
-
 			md.update(encodeKey(key));
-
 			var digest = md.digest();
-
 			var buf = new StringBuffer();
 			buf.append("SHA256");
 			buf.append(":");
-
 			buf.append(Base64.getEncoder().encodeToString(digest));
 			while (buf.charAt(buf.length() - 1) == '=') {
 				buf.delete(buf.length() - 1, buf.length());

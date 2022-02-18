@@ -2,10 +2,6 @@ package com.logonbox.authenticator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.util.ArrayList;
-
 import org.junit.jupiter.api.Test;
 
 public class AuthenticatorClientTest {
@@ -33,34 +29,5 @@ public class AuthenticatorClientTest {
 		assertEquals("Some authorize text", client.getAuthorizeText());
 		assertEquals("Some prompt text", client.getPromptText());
 		assertEquals("A remote name", client.getRemoteName());
-	}
-
-	@Test
-	void testDebug() throws IOException {
-		var client = new AuthenticatorClient("test.mydomain.com");
-		var l = new ArrayList<>();
-		client.enableDebug(new Logger() {
-			@Override
-			public void info(String msg) {
-				l.add(msg);
-			}
-
-			@Override
-			public void error(String msg) {
-				l.add(msg);
-			}
-
-			@Override
-			public void error(String msg, Throwable e) {
-				l.add(msg);
-			}
-		});
-		try {
-			client.authenticate("xxxx");
-		}
-		catch(ConnectException ce) {
-		}
-		assertEquals("Some authorize text", l.get(0));
-		
 	}
 }
