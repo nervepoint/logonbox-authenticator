@@ -190,23 +190,26 @@ public class AuthenticatorClient {
 					if (key.trim().startsWith("#")) {
 						continue;
 					}
+
+					if(debug) {
+						log.info(String.format("Parsing key %s", key));
+					}
+
+					PublicKey pub = null;
 					try {
 						
-						if(debug) {
-							log.info(String.format("Parsing key %s", key));
-						}
-						
-						var pub = decodeKey(key);
+						pub = decodeKey(key);
 						
 						if(debug) {
 							log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
 						}
 						
-						return signPayload(principal, pub, replaceVariables(promptText, principal), authorizeText, payload);
 					} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
 						log.error(e.getMessage());
 						continue;
 					}
+					
+					return signPayload(principal, pub, replaceVariables(promptText, principal), authorizeText, payload);
 				}
 			}
 
@@ -473,18 +476,25 @@ public class AuthenticatorClient {
 		
 		try(var request = new ByteArrayWriter()) {
 			
+
 			var key = getDefaultKey(email);
 			var fingerprint = generateFingerprint(key);
 			var flags = getFlags(key);
+
+			var rnd = new SecureRandom();
+			var nonce = rnd.nextInt();
+			var noise = new byte[16];
 			
+			rnd.nextBytes(noise);
 			request.writeString(email);
 			request.writeString(fingerprint);
 			request.writeString(getRemoteName());
 			request.writeString(getPromptText());
 			request.writeString(getAuthorizeText());
 			request.writeInt(flags);
-			request.writeInt(System.currentTimeMillis());
+			request.writeInt(nonce);
 			request.writeString(redirectURL);
+			request.write(noise);
 		
 			var encoded = Base64.getUrlEncoder().encodeToString(request.toByteArray());
 
