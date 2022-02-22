@@ -8,6 +8,11 @@ As part of the signing operation, the user must authorize the request within the
 
 To authenticate the user, the API verifies the signature returned to obtain the authentication result.
 
+## Other Languages
+
+ * [Python](https://github.com/nervepoint/logonbox-authenticator-python)
+ * [Node/Javascript](https://github.com/nervepoint/logonbox-authenticator-nodejs)
+
 ## Status
 
 [![Java CI with Maven](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml/badge.svg)](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml)
