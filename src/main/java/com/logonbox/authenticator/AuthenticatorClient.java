@@ -269,6 +269,10 @@ public class AuthenticatorClient {
 			builder.append(String.valueOf(flags));
 			builder.append("&payload=");
 			builder.append(encodedPayload);
+			
+			if(debug) {
+				log.info(String.format("Request data \"%s\"", builder.toString()));
+			}
 
 			var request = HttpRequest.newBuilder()
 					.uri(new URI(String.format("https://%s:%d/app/api/authenticator/signPayload", hostname, port)))
