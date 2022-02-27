@@ -440,7 +440,7 @@ public class AuthenticatorClient {
 			}
 		}
 		
-		if(Objects.isNull(selected)) {
+		if(!keys.isEmpty() && Objects.isNull(selected)) {
 			selected = keys.iterator().next();
 		}
 		
@@ -482,6 +482,10 @@ public class AuthenticatorClient {
 			
 
 			var key = getDefaultKey(email);
+			
+			if(Objects.isNull(key)) {
+				throw new IOException(String.format("%s is not registered in the LogonBox Authenticator directory!", email));
+			}
 			var fingerprint = generateFingerprint(key);
 			var flags = getFlags(key);
 
