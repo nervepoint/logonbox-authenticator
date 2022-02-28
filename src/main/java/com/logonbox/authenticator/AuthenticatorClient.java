@@ -1,35 +1,8 @@
 package com.logonbox.authenticator;
 
-/*
- * #%L
- * LogonBox Authenticator API
- * %%
- * Copyright (C) 2022 LogonBox Limited
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpRequest.Builder;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -46,30 +19,74 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class AuthenticatorClient {
 
-	private final String hostname;
-	private final int port;
 	private String remoteName = "LogonBox Authenticator API";
 	private String promptText = "{username} wants to authenticate from {remoteName} using your {hostname} credentials.";
 	private String authorizeText = "Authorize";
 	private boolean debug = false; 
 	private Logger log = new Logger() { };
+	private final SignatureGenerator signatureGenerator;
+	private final KeySource keySource;
+	private final RandomGenerator randomGenerator;
+	private List<String> supportedAlgorithms;
 
 	final static byte[] ED25519_ASN_HEADER = { 0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21,
 			0x00 };
+
+	AuthenticatorClient() {
+		this((c, p, f, t, bt, e, fl) -> {
+			throw new UnsupportedOperationException();
+		}, (c, p) -> {
+			throw new UnsupportedOperationException();
+		}, defaultRandomGenerator());
+	}
+
+	protected static RandomGenerator defaultRandomGenerator() {
+		return new RandomGenerator() {
+			private SecureRandom rnd = new SecureRandom();
+			@Override
+			public byte[] bytes(int count) {
+				var b = new byte[count];
+				rnd.nextBytes(b);
+				return b;
+			}
+		};
+	}
 
 	public AuthenticatorClient(String hostname) {
 		this(hostname, 443);
 	}
 
 	public AuthenticatorClient(String hostname, int port) {
-		this.hostname = hostname;
-		this.port = port;
+		signatureGenerator = new DefaultSignatureGenerator(hostname, port);
+		keySource = new DefaultKeySource(hostname, port);
+		randomGenerator = defaultRandomGenerator();
 	}
 	
+	public AuthenticatorClient(SignatureGenerator signatureGenerator, KeySource keySource, RandomGenerator randomGenerator) {
+		super();
+		this.signatureGenerator = signatureGenerator;
+		this.keySource = keySource;
+		this.randomGenerator = randomGenerator;
+	}
+
+	public List<String> getSupportedAlgorithms() {
+		return supportedAlgorithms;
+	}
+
+	public void setSupportedAlgorithms(List<String> supportedAlgorithms) {
+		this.supportedAlgorithms = supportedAlgorithms;
+	}
+
+	public KeySource getKeySource() {
+		return keySource;
+	}
+
+	public SignatureGenerator getSignatureGenerator() {
+		return signatureGenerator;
+	}
+
 	public void enableDebug() {
 		this.debug = true;
 	}
@@ -77,6 +94,14 @@ public class AuthenticatorClient {
 	public void enableDebug(Logger log) {
 		this.log = log;
 		this.debug = true;
+	}
+
+	public boolean isDebug() {
+		return debug;
+	}
+
+	public Logger getLog() {
+		return log;
 	}
 
 	public String getRemoteName() {
@@ -103,126 +128,80 @@ public class AuthenticatorClient {
 		this.authorizeText = authorizeText;
 	}
 
-	public AuthenticatorResponse authenticate(String principal) throws IOException {
-		var tmp = new byte[128];
-		var rnd = new SecureRandom();
-		rnd.nextBytes(tmp);
-
-		return authenticate(principal, tmp);
+	public AuthenticatorResponse authenticate(String principal) {
+		return authenticate(principal, randomGenerator.bytes(128));
 	}
 
-	public Collection<PublicKey> getUserKeys(String principal) throws IOException {
+	public Collection<PublicKey> getUserKeys(String principal) {
 
-		try {
-			var request = HttpRequest.newBuilder()
-					.uri(new URI(String.format("https://%s:%d/authorizedKeys/%s", hostname, port, principal))).GET()
-					.build();
-
-			var client = HttpClient.newHttpClient();
-			var response = client.send(request, BodyHandlers.ofString());
-
-			if(debug) {
-				log.info(String.format("Received authorized keys from %s", hostname));
-				log.info(response.body());
-			}
-			
-			List<PublicKey> keys = new ArrayList<>();
-			try (var reader = new BufferedReader(new StringReader(response.body()))) {
-
-				var key = reader.readLine();
-				if(!key.startsWith("# Authorized")) {
-					throw new IOException(String.format("Unable to list users authorized keys from %s", hostname));
+		List<PublicKey> publicKeys = new ArrayList<>();
+		for(var key : keySource.listKeys(this, principal)) {
+			try {
+				if(debug) {
+					log.info(String.format("Parsing key %s", key));
 				}
-
-				while ((key = reader.readLine()) != null) {
-					if (key.trim().startsWith("#")) {
-						continue;
-					}
-					try {
-						
-						if(debug) {
-							log.info(String.format("Parsing key %s", key));
-						}
-						
-						var pub = decodeKey(key);
-						keys.add(pub);
-						
-						if(debug) {
-							log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
-						}
-						
-					} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-						log.error(e.getMessage());
-						continue;
-					}
+				
+				var pub = decodeKey(key);
+				
+				if(debug) {
+					log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
 				}
+				
+				var algo = getAlgorithm(pub);
+				if(supportedAlgorithms == null || supportedAlgorithms.contains(algo)) {
+					publicKeys.add(pub);
+				}
+				else {
+					if(debug) {
+						log.info(String.format("Skipping %s public key, not an enabled algorithm.", pub.getAlgorithm()));
+					}	
+				}
+				
+			} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
+				log.error(e.getMessage());
+				continue;
 			}
-
-			return keys;
-		} catch (InterruptedException | URISyntaxException e) {
-			throw new IOException(e.getMessage(), e);
 		}
+		return publicKeys;
 	}
 	
-	public AuthenticatorResponse authenticate(String principal, byte[] payload) throws IOException {
-
-		try {
-			var request = HttpRequest.newBuilder()
-					.uri(new URI(String.format("https://%s:%d/authorizedKeys/%s", hostname, port, principal))).GET()
-					.build();
-
-			var client = HttpClient.newHttpClient();
-			var response = client.send(request, BodyHandlers.ofString());
-
-			if(debug) {
-				log.info(String.format("Received authorized keys from %s", hostname));
-				log.info(response.body());
+	public AuthenticatorResponse authenticate(String principal, byte[] payload) {
+		for(var key : keySource.listKeys(this, principal)) {
+			try {
+				return authenticate(principal, payload, key);
+			} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
+				log.error(e.getMessage());
+				continue;
+			} catch(IllegalArgumentException e) {
+				if(debug) {
+					log.info("Skipping disabled algorithm.");
+				}	
 			}
-			
-			try (var reader = new BufferedReader(new StringReader(response.body()))) {
+		}
+		throw new IllegalArgumentException(String.format("No suitable key found for %s", principal));
+	}
 
-				String key = reader.readLine();
-				
-				if(!key.startsWith("# Authorized")) {
-					throw new IOException(String.format("Unable to list users authorized keys from %s", hostname));
-				}
-				while ((key = reader.readLine()) != null) {
-					if (key.trim().startsWith("#")) {
-						continue;
-					}
-
-					if(debug) {
-						log.info(String.format("Parsing key %s", key));
-					}
-
-					PublicKey pub = null;
-					try {
-						
-						pub = decodeKey(key);
-						
-						if(debug) {
-							log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
-						}
-						
-					} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-						log.error(e.getMessage());
-						continue;
-					}
-					
-					return signPayload(principal, pub, replaceVariables(promptText, principal), authorizeText, payload);
-				}
-			}
-
-			throw new IOException(String.format("No suitbale key found for %s", principal));
-		} catch (InterruptedException | URISyntaxException e) {
-			throw new IOException(e.getMessage(), e);
+	private AuthenticatorResponse authenticate(String principal, byte[] payload, String key)
+			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+		var pub = decodeKey(key);
+		
+		if(debug) {
+			log.info(String.format("Decoded %s public key", pub.getAlgorithm()));
+		}
+		
+		var algo = getAlgorithm(pub);
+		if(supportedAlgorithms == null || supportedAlgorithms.contains(algo)) {
+			return signPayload(principal, pub, replaceVariables(promptText, principal), authorizeText, payload);
+		}
+		else {
+			throw new IllegalArgumentException();
 		}
 	}
 
 	private String replaceVariables(String promptText, String principal) {
 		return promptText.replace("{username}", principal)
 				.replace("{remoteName}", remoteName)
-				.replace("{hostname}", hostname);
+				.replace("{hostname}", signatureGenerator.getHostname());
 	}
 
 	private AuthenticatorResponse signPayload(String principal, PublicKey key, String text, String buttonText,
@@ -242,74 +221,17 @@ public class AuthenticatorClient {
 			 */
 			flags = 4;
 		}
-
-		return new AuthenticatorResponse(key, payload,
-						requestSignature(principal, fingerprint, text, 
-								buttonText, encodedPayload, flags), flags);
-
-	}
-
-	private byte[] requestSignature(String principal, String fingerprint, String text, String buttonText,
-			String encodedPayload, int flags) throws IOException {
-
-		try {
-			
-			var builder = new StringBuilder();
-			builder.append("username=");
-			builder.append(URLEncoder.encode(principal, StandardCharsets.UTF_8));
-			builder.append("&fingerprint=");
-			builder.append(URLEncoder.encode(fingerprint, StandardCharsets.UTF_8));
-			builder.append("&remoteName=");
-			builder.append(URLEncoder.encode(remoteName, StandardCharsets.UTF_8));
-			builder.append("&text=");
-			builder.append(URLEncoder.encode(text, StandardCharsets.UTF_8));
-			builder.append("&authorizeText=");
-			builder.append(URLEncoder.encode(buttonText, StandardCharsets.UTF_8));
-			builder.append("&flags=");
-			builder.append(String.valueOf(flags));
-			builder.append("&payload=");
-			builder.append(encodedPayload);
-			
-			if(debug) {
-				log.info(String.format("Request data \"%s\"", builder.toString()));
-			}
-
-			var request = HttpRequest.newBuilder()
-					.uri(new URI(String.format("https://%s:%d/app/api/authenticator/signPayload", hostname, port)))
-					.header("Content-Type", "application/x-www-form-urlencoded")
-					.POST(HttpRequest.BodyPublishers.ofString(builder.toString())).build();
-
-			var client = HttpClient.newHttpClient();
-			
-			var response = client.send(request, BodyHandlers.ofString());
-
-			if(debug) {
-				log.info(String.format("Received %s response", response.statusCode()));
-				log.info(response.body());
-			}
-			var result = new ObjectMapper().readValue(response.body(), SignatureResponse.class);
-			
-			if(!result.isSuccess()) {
-				throw new IOException(result.getMessage());
-			}
-			
-			if("".equals(result.getSignature())) {
-				try(var reader = new ByteArrayReader(Base64.getUrlDecoder().decode(result.getResponse()))) {
-					var success = reader.readBoolean();
-					if(!success) {
-						throw new IOException(reader.readString());
-					}
-				}
-				throw new IOException("The server did not respond with a valid response!");
-			}
-
-			return Base64.getUrlDecoder().decode(result.getSignature());
-		} catch (URISyntaxException | InterruptedException e) {
-			throw new IOException(e.getMessage(), e);
+		
+		var sig = signatureGenerator.requestSignature(this, principal, fingerprint, text, 
+				buttonText, encodedPayload, flags);
+		if(debug) {
+			log.info(String.format("Request signature is %s", Base64.getEncoder().encodeToString(sig)));
 		}
+		
+		return new AuthenticatorResponse(key, payload, sig, flags);
 	}
 
-	public String generateFingerprint(PublicKey key) throws IOException {
+	private String generateFingerprint(PublicKey key) throws IOException {
 
 		try {
 			var md = MessageDigest.getInstance("SHA-256");
@@ -489,20 +411,15 @@ public class AuthenticatorClient {
 			var fingerprint = generateFingerprint(key);
 			var flags = getFlags(key);
 
-			var rnd = new SecureRandom();
-			var nonce = rnd.nextInt();
-			var noise = new byte[16];
-			
-			rnd.nextBytes(noise);
 			request.writeString(email);
 			request.writeString(fingerprint);
 			request.writeString(getRemoteName());
 			request.writeString(getPromptText());
 			request.writeString(getAuthorizeText());
 			request.writeInt(flags);
-			request.writeInt(nonce);
+			request.write(randomGenerator.bytes(4));
 			request.writeString(redirectURL);
-			request.write(noise);
+			request.write(randomGenerator.bytes(16));
 		
 			var encoded = Base64.getUrlEncoder().encodeToString(request.toByteArray());
 
@@ -510,12 +427,7 @@ public class AuthenticatorClient {
 		} 
 	}
 
-	public String getHostname() {
-		return hostname;
+	protected Builder newHttpRequestBuilder() {
+		return HttpRequest.newBuilder();
 	}
-	
-	public int getPort() {
-		return port;
-	}
-
 }

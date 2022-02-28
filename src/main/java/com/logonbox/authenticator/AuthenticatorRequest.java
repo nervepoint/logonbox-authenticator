@@ -27,18 +27,19 @@ public class AuthenticatorRequest {
 
 	private final AuthenticatorClient client;
 	private final String encodedPayload;
-	
+
 	AuthenticatorRequest(AuthenticatorClient client, String encodedPayload) {
 		this.client = client;
 		this.encodedPayload = encodedPayload;
 	}
-	
+
 	public String getUrl() {
-		if(client.getPort()!=443) {
-			return String.format("https://%s:%d/authenticator/sign/%s", 
-					client.getHostname(), client.getPort(), encodedPayload);
+		if (client.getSignatureGenerator().getPort() != 443) {
+			return String.format("https://%s:%d/authenticator/sign/%s", client.getSignatureGenerator().getHostname(),
+					client.getSignatureGenerator().getPort(), encodedPayload);
 		} else {
-			return String.format("https://%s/authenticator/sign/%s", client.getHostname(), encodedPayload);
+			return String.format("https://%s/authenticator/sign/%s", client.getSignatureGenerator().getHostname(),
+					encodedPayload);
 		}
 	}
 
@@ -47,13 +48,12 @@ public class AuthenticatorRequest {
 	}
 
 	public AuthenticatorResponse processResponse(String response) throws IOException {
-		
+
 		var payload = Base64.getUrlDecoder().decode(encodedPayload);
 		var signature = Base64.getUrlDecoder().decode(response);
-		
+
 		return client.processResponse(payload, signature);
-		
+
 	}
-	
-	
+
 }
