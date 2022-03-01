@@ -35,7 +35,7 @@ public class DefaultKeySource implements KeySource {
 				try {
 
 					var request = client.newHttpRequestBuilder()
-							.uri(new URI(String.format("https://%s:%d/authorizedKeys/%s", hostname, port, principal)))
+							.uri(new URI(String.format("https://%s:%d/app/api/authenticator/keys/%s", hostname, port, principal)))
 							.GET().build();
 
 					var httpClient = HttpClient.newHttpClient();
