@@ -18,6 +18,7 @@ Safeguard your people, passwords and apps with LogonBox's 2-Factor [Authenticati
 
  * [Python](https://github.com/nervepoint/logonbox-authenticator-python)
  * [Node/Javascript](https://github.com/nervepoint/logonbox-authenticator-nodejs)
+ * [PHP](https://github.com/nervepoint/logonbox-authenticator-php)
 
 ## Status
 
