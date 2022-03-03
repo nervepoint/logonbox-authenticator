@@ -2,6 +2,7 @@ package com.logonbox.authenticator;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -9,6 +10,21 @@ import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 
 public class ByteArrayReaderTest {
+	
+	@Test
+	void stringUnderflow() {
+		assertThrows(IOException.class, () -> {
+			new ByteArrayReader(new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 13, (byte) 65, (byte) 32,
+					(byte) 84, (byte) 101, (byte) 115, (byte) 116 }).readString();
+		});
+	}
+	
+	@Test
+	void intUnderflow() {
+		assertThrows(IOException.class, () -> {
+			new ByteArrayReader(new byte[] { (byte) 0, (byte) 0, (byte) 0 }).readInt();
+		});
+	}
 
 	@Test
 	void testString() throws IOException {

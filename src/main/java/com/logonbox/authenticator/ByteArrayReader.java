@@ -21,7 +21,6 @@ package com.logonbox.authenticator;
  */
 
 import java.io.ByteArrayInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -44,8 +43,6 @@ class ByteArrayReader extends ByteArrayInputStream {
 		int ch2 = read();
 		int ch3 = read();
 		int ch4 = read();
-		if ((ch1 | ch2 | ch3 | ch4) < 0)
-			throw new EOFException();
 		return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0)) & 0xFFFFFFFFL;
 	}
 

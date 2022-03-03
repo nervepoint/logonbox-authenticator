@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Iterator;
 
@@ -34,18 +34,20 @@ public class DefaultKeySource implements KeySource {
 			public Iterator<String> iterator() {
 				try {
 
-					var request = client.newHttpRequestBuilder()
+					var request = HttpRequest.newBuilder()
 							.uri(new URI(String.format("https://%s:%d/app/api/authenticator/keys/%s", hostname, port, principal)))
 							.GET().build();
 
-					var httpClient = HttpClient.newHttpClient();
+					var httpClient = client.newHttpClientBuilder().build();
 					var response = httpClient.send(request, BodyHandlers.ofString());
 
 					if (client.isDebug()) {
 						client.getLog().info(String.format("Received authorized keys from %s", hostname));
 						client.getLog().info(response.body());
 					}
-					var reader = new BufferedReader(new StringReader(response.body()));
+					var body = response.body();
+					System.out.println(body);
+					var reader = new BufferedReader(new StringReader(body));
 					var key = reader.readLine();
 					if (!key.startsWith("# Authorized")) {
 						throw new IOException(String.format("Unable to list users authorized keys from %s", hostname));
@@ -66,7 +68,7 @@ public class DefaultKeySource implements KeySource {
 										break;
 									}
 								} catch (IOException ioe) {
-									throw new IllegalStateException("Failed to get next key.", ioe);
+									// Will never happen, entire response is read into a string
 								}
 							}
 						}

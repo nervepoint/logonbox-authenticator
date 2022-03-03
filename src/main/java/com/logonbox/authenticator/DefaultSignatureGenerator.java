@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
@@ -80,13 +79,13 @@ public class DefaultSignatureGenerator implements SignatureGenerator {
 				client.getLog().info(String.format("Request data \"%s\"", builder.toString()));
 			}
 
-			var request = client.newHttpRequestBuilder()
+			var request = HttpRequest.newBuilder()
 					.uri(new URI(String.format("https://%s:%d/app/api/authenticator/signPayload", host,
 							port)))
 					.header("Content-Type", "application/x-www-form-urlencoded")
 					.POST(HttpRequest.BodyPublishers.ofString(builder.toString())).build();
 
-			var httpClient = HttpClient.newHttpClient();
+			var httpClient = client.newHttpClientBuilder().build();
 			var response = httpClient.send(request, BodyHandlers.ofString());
 
 			if (client.isDebug()) {
