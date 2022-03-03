@@ -279,6 +279,7 @@ public class AuthenticatorClient {
 				var encoded = key.getEncoded();
 				var seed = Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
 				writer.writeBinaryString(seed);
+				break;
 			}
 
 			return writer.toByteArray();
