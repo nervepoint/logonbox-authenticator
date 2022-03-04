@@ -109,7 +109,7 @@ public class DefaultSignatureGenerator implements SignatureGenerator {
 			}
 
 			return Base64.getUrlDecoder().decode(result.getSignature());
-		} catch (URISyntaxException | InterruptedException e) {
+		} catch (IllegalArgumentException | URISyntaxException | InterruptedException e) {
 			throw new IOException(e.getMessage(), e);
 		}
 	}

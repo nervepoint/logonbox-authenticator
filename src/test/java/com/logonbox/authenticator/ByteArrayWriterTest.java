@@ -17,6 +17,13 @@ public class ByteArrayWriterTest {
 				(byte) 101, (byte) 115, (byte) 116, (byte) 32, (byte) 83, (byte) 116, (byte) 114, (byte) 105,
 				(byte) 110, (byte) 103 }, w.toByteArray());
 	}
+	
+	@Test
+	void testNullString() throws IOException {
+		var w = new ByteArrayWriter();
+		w.writeString(null);
+		assertArrayEquals(new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 0 }, w.toByteArray());
+	}
 
 	@Test
 	void testInteger() throws IOException {
@@ -27,6 +34,15 @@ public class ByteArrayWriterTest {
 		w.writeInt(4294967040l);
 		assertArrayEquals(new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 0, 0, 0, 0, 0, 0, 0,
 				(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 0 }, w.toByteArray());
+	}
+
+	@Test
+	void testBool() throws IOException {
+		var w = new ByteArrayWriter();
+		w.writeBoolean(true);
+		assertArrayEquals(new byte[] { (byte) 0x1 }, w.toByteArray());
+		w.writeBoolean(false);
+		assertArrayEquals(new byte[] { (byte) 0x1, 0x00 }, w.toByteArray());
 	}
 
 	@Test

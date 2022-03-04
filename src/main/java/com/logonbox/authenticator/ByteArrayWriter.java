@@ -65,4 +65,8 @@ public class ByteArrayWriter extends ByteArrayOutputStream {
 		writeInt(data.length);
 		write(data);
 	}
+	
+	public void writeBoolean(boolean bool) throws IOException {
+		write(bool ? 1 : 0);
+	}
 }

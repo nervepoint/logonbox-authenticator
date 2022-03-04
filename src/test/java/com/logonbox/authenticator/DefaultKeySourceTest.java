@@ -13,42 +13,13 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
 import org.junit.jupiter.api.Test;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
 @WireMockTest(httpsEnabled = true)
-public class DefaultKeySourceTest {
-
-	static {
-		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
-
-		// Create a trust manager that does not validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-
-			public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-			}
-
-			public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-			}
-		} };
-
-		// Install the all-trusting trust manager
-		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-			SSLContext.setDefault(sc);
-		} catch (Exception e) {
-		}
-	}
+public class DefaultKeySourceTest extends AbstractHttpTest {
 
 	@Test
 	public void testConstruct() {
@@ -61,12 +32,13 @@ public class DefaultKeySourceTest {
 	public void testListKeys(WireMockRuntimeInfo wmRuntimeInfo) {
 		var kl = AuthenticatorClientTest.keyList();
 		stubFor(get(urlEqualTo("/app/api/authenticator/keys/test@test.com"))
-				.willReturn(aResponse().withHeader("Content-Type", "text/plain").withBody(String.join("\r\n", Stream
-						.concat(Arrays.asList("# Authorized", "", "# Some other comment").stream(), kl.stream()).collect(Collectors.toList())))));
+				.willReturn(aResponse().withHeader("Content-Type", "text/plain")
+						.withBody(String.join("\r\n", Stream
+								.concat(Arrays.asList("# Authorized", "", "# Some other comment").stream(), kl.stream())
+								.collect(Collectors.toList())))));
 
 		var ks = new DefaultKeySource("localhost", wmRuntimeInfo.getHttpsPort());
-		var client = new AuthenticatorClient();
-		client.enableDebug();
+		var client = createClient();
 		var it = ks.listKeys(client, "test@test.com").iterator();
 		assertTrue(it.hasNext());
 		assertEquals(kl.get(0), it.next());
@@ -82,8 +54,7 @@ public class DefaultKeySourceTest {
 				.willReturn(aResponse().withHeader("Content-Type", "text/plain").withBody(String.join("\r\n", Stream
 						.concat(Arrays.asList("# XXXXXXXXXX").stream(), kl.stream()).collect(Collectors.toList())))));
 		var ks = new DefaultKeySource("localhost", wmRuntimeInfo.getHttpsPort());
-		var client = new AuthenticatorClient();
-		client.enableDebug();
+		var client = createClient();
 		assertThrows(IllegalStateException.class, () -> {
 			ks.listKeys(client, "test@test.com").iterator();
 		});
