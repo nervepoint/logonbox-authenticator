@@ -76,6 +76,12 @@
 			<version>2.32.0</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>net.i2p.crypto</groupId>
+			<artifactId>eddsa</artifactId>
+			<version>0.3.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<profiles>

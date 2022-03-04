@@ -3,7 +3,7 @@ package com.logonbox.authenticator;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AuthenticatorRequestTest {
+public class AuthenticatorRequestTest extends AbstractTest {
 
 	@Test
 	void testUrl443() {

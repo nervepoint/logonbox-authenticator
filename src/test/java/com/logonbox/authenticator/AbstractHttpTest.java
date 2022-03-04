@@ -4,7 +4,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-public class AbstractHttpTest {
+public class AbstractHttpTest extends AbstractTest {
 
 	static {
 		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");

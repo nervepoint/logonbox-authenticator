@@ -1,5 +1,5 @@
 package com.logonbox.authenticator;
 
-public class AuthenticatorResponseTest {
+public class AuthenticatorResponseTest  extends AbstractTest {
 
 }
