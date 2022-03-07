@@ -1,6 +1,8 @@
 package com.logonbox.authenticator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,11 +13,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
-public class AuthenticatorClientTest {
+public class AuthenticatorClientTest extends AbstractTest {
+
+	@Test
+	void testDefaultRng() {
+		var rng = AuthenticatorClient.defaultRandomGenerator();
+		var first = rng.bytes(256);
+		for (int i = 0; i < 256; i++) {
+			var second = rng.bytes(256);
+			assertNotEquals(first, second);
+			first = second;
+		}
+	}
 
 	@Test
 	void testCreate1() {
 		var client = new AuthenticatorClient("test.mydomain.com");
+		configureClient(client);
 		assertEquals(443, client.getSignatureGenerator().getPort());
 		assertEquals("test.mydomain.com", client.getSignatureGenerator().getHostname());
 	}
@@ -23,6 +37,7 @@ public class AuthenticatorClientTest {
 	@Test
 	void testCreate2() {
 		var client = new AuthenticatorClient("test.mydomain.com", 8443);
+		configureClient(client);
 		assertEquals(8443, client.getSignatureGenerator().getPort());
 		assertEquals("test.mydomain.com", client.getSignatureGenerator().getHostname());
 	}
@@ -30,6 +45,7 @@ public class AuthenticatorClientTest {
 	@Test
 	void testUpdate() {
 		var client = new AuthenticatorClient("test.mydomain.com");
+		configureClient(client);
 		client.setAuthorizeText("Some authorize text");
 		client.setPromptText("Some prompt text");
 		client.setRemoteName("A remote name");
@@ -39,12 +55,37 @@ public class AuthenticatorClientTest {
 	}
 
 	@Test
+	void testGetRSAKey() throws Exception {
+		var keys = keyList();
+		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> {
+			throw new UnsupportedOperationException();
+		}, (c, p) -> keys, (c) -> new byte[c]);
+		configureClient(client);
+		client.setSupportedAlgorithms(Arrays.asList("ssh-rsa"));
+		var inkeys = client.getUserKeys("test");
+		assertEquals("RSA", inkeys.iterator().next().getAlgorithm());
+	}
+
+	@Test
+	void testGetEd25519Key() throws Exception {
+		var keys = keyList();
+		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> {
+			throw new UnsupportedOperationException();
+		}, (c, p) -> keys, (c) -> new byte[c]);
+		configureClient(client);
+		client.setSupportedAlgorithms(Arrays.asList("ssh-ed25519"));
+		var inkeys = client.getUserKeys("test");
+		assertTrue("Ed25519".equals(inkeys.iterator().next().getAlgorithm())
+				|| "EdDSA".equals(inkeys.iterator().next().getAlgorithm()));
+	}
+
+	@Test
 	void testRSAZeroRandomBytes() throws Exception {
 		var sig = Base64.getDecoder().decode(
 				"qoeING0vzEXTjmFrX4ZQw2AfZJhFloL6ctgUZ8iveoyoV79V5R7cBfjhVJUDuvTwIqmVtFbcj3o76MNL4cj9tEGDWxgoNf/H0Kw55k08/QW/98VDX9eXxr/gDqDjMmWTnYPlqssqq/IR/OA08dNIZMoH1Wd3G+DCszrOr07lwyPC4oSISqs84fxlBJfaO6CpHncu6JJPyhjRis3Y1DH+t8MR3gCgMz0cl01KoXcYzwYY5kTe1qSpU3G8wtfhf6gGq6cIIu6mbsP6AXSvfiJ/XVB636g2oi2e33EaXzvh2fNHi6F6mVgJvT9Biu9fbzlcs3Q5LXbOFsm5u4NRcvSZY7YRNdJAwTwgS8E9lesPt3ME4iyIlpMa1Dy+sYlKPH1G6Guigi4zt4mRAJPASWG4yUxzeOgNAz8DCT9n0t2bMgst/AV3w8GvE2wC6igA/aJnYTiq+alwB2zUCjLMBSai1Q8hsvpsYDXUq2KgCvurLB781mvJO9MKWhWD51IVPeLT");
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, (c) -> new byte[c]);
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-rsa"));
 		client.authenticate("test").verify();
 	}
@@ -55,7 +96,7 @@ public class AuthenticatorClientTest {
 				.decode("ZCqTWvzwzOimDwBGpsxgYzhVcJfWMCbF0D00lxFOfg4Z3777zWqq3iTvQgqiPKIaRVYOQ6vN9DvbxZiJOyyTAg==");
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, (c) -> new byte[c]);
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-ed25519"));
 		assertTrue(client.authenticate("test").verify());
 	}
@@ -66,7 +107,7 @@ public class AuthenticatorClientTest {
 				"FcYTC3MqvhBeWZimEclN6c1ERnYdPOfWL7Uc3gGUybs+3wIow1rZ0/mH9c4VJ2IkwgdEDspmyppoGge8JMPrFf5zxsqQzJiUzqKFQDFOe3HcSRwjJk3OM8KFaQTymHubWsCiRQCGoiUuMd+7ETF6uANad3bT6fbAWiAPjhxJSwKP4udihMXhznuNfK7llNZT9t5EdMIiS4Xp7jh4L7ZddBINTR/O/fSBRk4HAppR5yJanEnHk7pfYjRxji+7jvtwx0nDAIhgkubsnelNGTgy1zDbHGt2cBS47XSMcyzN6xChFPHCN8b6J78mEP8vCjFCZReoAckzQqelbzBoKoneS/zDmqJqNeV21RfHCKApeZ877ZW0v54B4tHNeeWGFj7nbs8PzAe8UQAAU9jZyyQIi1qYZWKK7vtqhz3OurTqGvLSrFiVGOBV3rzguqbF+Tf4a4YCUhyg+AAW266yS/vB2aVxka+SQ6fNKAnDbiFxRRCzUT5sZl+XBSg7IS/TSwVU");
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, sequentialRng());
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-rsa"));
 		assertTrue(client.authenticate("test").verify());
 	}
@@ -76,7 +117,7 @@ public class AuthenticatorClientTest {
 		var sig = new byte[384];
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, sequentialRng());
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-rsa"));
 		assertFalse(client.authenticate("test").verify());
 	}
@@ -87,7 +128,7 @@ public class AuthenticatorClientTest {
 				.decode("1eB+ogdIs4G/+KvZBNI1Gzh6tQNsHn5BsFiDUhMPr3igf2Pnnm6bwRWlUlXYFUmi4LEr1mR9Jvc/5QUA9zm/CQ==");
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, sequentialRng());
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-ed25519"));
 		assertTrue(client.authenticate("test").verify());
 	}
@@ -97,9 +138,20 @@ public class AuthenticatorClientTest {
 		var sig = new byte[64];
 		var keys = keyList();
 		var client = new AuthenticatorClient((c, p, f, t, bt, e, fl) -> sig, (c, p) -> keys, sequentialRng());
-		client.enableDebug();
+		configureClient(client);
 		client.setSupportedAlgorithms(Arrays.asList("ssh-ed25519"));
 		assertFalse(client.authenticate("test").verify());
+	}
+
+	@Test
+	void testDefaultConstructor() {
+		var c = new AuthenticatorClient();
+		assertThrows(UnsupportedOperationException.class, () -> c.getKeySource().listKeys(null, null));
+		assertThrows(UnsupportedOperationException.class,
+				() -> c.getSignatureGenerator().requestSignature(null, null, null, null, null, null, 0));
+	}
+
+	protected void configureClient(AuthenticatorClient client) {
 	}
 
 	static List<String> keyList() {

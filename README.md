@@ -10,7 +10,7 @@ To authenticate the user, the API verifies the signature returned to obtain the 
 
 # About LogonBox Authenticator
 
-Safeguard your people, passwords and apps with LogonBox's 2-Factor [Authentication app](https://www.logonbox.com/content/logonbox-authenticator/) for Android and iOS. 
+Safeguard your people, passwords and apps with [LogonBox's](https://logonbox.com) 2-Factor [Authentication app](https://www.logonbox.com/content/logonbox-authenticator/) for Android and iOS. 
 
 <img src="src/web/logonbox-logo.png" width="256">
 
