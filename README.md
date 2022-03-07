@@ -1,5 +1,7 @@
 # LogonBox Authenticator API for Java
 
+[![Java CI with Maven](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml/badge.svg)](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.nervepoint/logonbox-authenticator-java/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.nervepoint/logonbox-authenticator-java)
+
 Use this API to integrate LogonBox Authenticator into your own Java application authentication flows.  
 
 The LogonBox Authenticator uses an authentication mechanism similar to SSH private key authentication where users keys are published in an authorized keys listing on the credential server. This API will read the trusted public keys and then submit an authentication request payload to the credential server for signing by the corresponding private key. 
@@ -20,13 +22,40 @@ Safeguard your people, passwords and apps with [LogonBox's](https://logonbox.com
  * [Node/Javascript](https://github.com/nervepoint/logonbox-authenticator-nodejs)
  * [PHP](https://github.com/nervepoint/logonbox-authenticator-php)
 
-## Status
+## Installation
 
-[![Java CI with Maven](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml/badge.svg)](https://github.com/nervepoint/logonbox-authenticator-java/actions/workflows/maven.yml)
+### Release
+
+No release yet on Maven Central, coming soon.
+
+### Snapshots
+
+Snapshots are available in the Sonatype Snapshot Repository.
+
+```xml
+<dependencies>
+	<dependency>
+		<groupId>com.nervepoint</groupId>
+		<artifactId>logonbox-authenticator-java</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+</dependencies>
+
+...
+
+<repositories>
+	<repository>
+		<id>snapshots-repo</id>
+		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		<releases><enabled>false</enabled></releases>
+		<snapshots><enabled>true</enabled></snapshots>
+	</repository>
+</repositories>
+```
 
 ## Usage
 
-There are many ways the authenticator can be used and this will depend on your authentication use case. 
+There are many ways the authenticator can be used and this will depend on your authentication use case.
 
 ### Server Redirect
 
