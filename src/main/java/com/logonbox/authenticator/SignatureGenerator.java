@@ -22,15 +22,10 @@ package com.logonbox.authenticator;
 
 import java.io.IOException;
 
+/**
+ * Generates a signature. Only used for <code>Direct</code> authentication.
+ */
 public interface SignatureGenerator {
 	byte[] requestSignature(AuthenticatorClient client, String principal, String fingerprint, String text, String buttonText, String encodedPayload,
 			int flags) throws IOException;
-
-	default String getHostname() {
-		return "localhost";
-	}
-
-	default int getPort() {
-		return 443;
-	}
 }

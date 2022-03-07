@@ -34,13 +34,17 @@ public class AuthenticatorRequest {
 	}
 
 	public String getUrl() {
-		if (client.getSignatureGenerator().getPort() != 443) {
-			return String.format("https://%s:%d/authenticator/sign/%s", client.getSignatureGenerator().getHostname(),
-					client.getSignatureGenerator().getPort(), encodedPayload);
+		if (client.getKeySource().getPort() != 443) {
+			return String.format("https://%s:%d/authenticator/sign/%s", client.getKeySource().getHostname(),
+					client.getKeySource().getPort(), encodedPayload);
 		} else {
-			return String.format("https://%s/authenticator/sign/%s", client.getSignatureGenerator().getHostname(),
+			return String.format("https://%s/authenticator/sign/%s", client.getKeySource().getHostname(),
 					encodedPayload);
 		}
+	}
+	
+	public String getEncodedPayload() {
+		return encodedPayload;
 	}
 
 	public AuthenticatorClient getClient() {

@@ -23,4 +23,12 @@ package com.logonbox.authenticator;
 public interface KeySource {
 	
 	Iterable<String> listKeys(AuthenticatorClient client, String principal);
+
+	default String getHostname() {
+		return "localhost";
+	}
+
+	default int getPort() {
+		return 443;
+	}
 }

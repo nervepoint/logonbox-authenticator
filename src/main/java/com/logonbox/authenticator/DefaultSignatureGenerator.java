@@ -35,6 +35,10 @@ public class DefaultSignatureGenerator implements SignatureGenerator {
 	
 	private final String host;
 	private final int port;
+	
+	public DefaultSignatureGenerator(KeySource keySource) {
+		this(keySource.getHostname(), keySource.getPort());
+	}
 
 	public DefaultSignatureGenerator(String host) {
 		this(host, 443);
@@ -45,12 +49,10 @@ public class DefaultSignatureGenerator implements SignatureGenerator {
 		this.port = port;
 	}
 	
-	@Override
 	public String getHostname() {
 		return host;
 	}
 
-	@Override
 	public int getPort() {
 		return port;
 	}

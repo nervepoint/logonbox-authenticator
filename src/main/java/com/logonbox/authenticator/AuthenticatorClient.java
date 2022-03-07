@@ -60,8 +60,8 @@ public class AuthenticatorClient {
 	}
 
 	public AuthenticatorClient(String hostname, int port) {
-		signatureGenerator = new DefaultSignatureGenerator(hostname, port);
 		keySource = new DefaultKeySource(hostname, port);
+		signatureGenerator = new DefaultSignatureGenerator(keySource);
 		randomGenerator = defaultRandomGenerator();
 	}
 
@@ -201,7 +201,7 @@ public class AuthenticatorClient {
 
 	private String replaceVariables(String promptText, String principal) {
 		return promptText.replace("{username}", principal).replace("{remoteName}", remoteName).replace("{hostname}",
-				signatureGenerator.getHostname());
+				keySource.getHostname());
 	}
 
 	private AuthenticatorResponse signPayload(String principal, PublicKey key, String text, String buttonText,
