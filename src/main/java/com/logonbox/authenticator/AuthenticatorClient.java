@@ -133,6 +133,10 @@ public class AuthenticatorClient {
 	public AuthenticatorResponse authenticate(String principal) {
 		return authenticate(principal, randomGenerator.bytes(128));
 	}
+	
+	public Iterable<String> getAuthorizedKeys(String principal) {
+		return keySource.listKeys(this, principal);
+	}
 
 	public Collection<PublicKey> getUserKeys(String principal) {
 
